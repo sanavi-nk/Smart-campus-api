@@ -1,335 +1,242 @@
-<sub>Client Server Architecture</sub>
-<sub>Sanavi Kulathilake</sub>
-<sub>UoW ID — w2121319   |   IIT ID — 20241171</sub>
-
 # Smart Campus Sensor & Room Management API
-
-## Overview
-
-The Smart Campus API is a RESTful web service built using **JAX-RS (Jersey)** and deployed on **Apache Tomcat 9**. It provides a comprehensive interface for managing university campus rooms, IoT sensors, and sensor reading history. The API follows REST architectural principles including resource-based URLs, appropriate HTTP status codes, structured JSON responses, and hypermedia-driven navigation (HATEOAS).
-
-The system is built around three core resources:
-
-* **Rooms** — physical spaces on campus (e.g., labs, libraries)
-* **Sensors** — IoT devices deployed within rooms (e.g., CO2, Temperature, Occupancy)
-* **Sensor Readings** — historical measurement logs recorded by each sensor
-All data is stored in-memory using thread-safe `ConcurrentHashMap` structures via dedicated singleton store classes (`RoomStore`, `SensorStore`, `ReadingStore`), ensuring data consistency across concurrent requests without the use of any external database.
-
-
-
+ 
+<sub>Client Server Architecture</sub>
+ 
+<sub>Sanavi Kulathilake</sub>
+ 
+<sub>UoW ID — w2121319 &nbsp;&nbsp;|&nbsp;&nbsp; IIT ID — 20241171</sub>
+ 
 ---
-
+ 
+## Overview
+ 
+The Smart Campus API is a RESTful web service built using JAX-RS (Jersey) and deployed on Apache Tomcat 9. It provides a comprehensive interface for managing university campus rooms, IoT sensors, and sensor reading history. The API follows REST architectural principles including resource-based URLs, appropriate HTTP status codes, structured JSON responses, and hypermedia-driven navigation (HATEOAS).
+ 
+The system is built around three core resources. Rooms represent physical spaces on campus such as labs and libraries. Sensors are IoT devices deployed within rooms such as CO2, Temperature, and Occupancy monitors. Sensor Readings are historical measurement logs recorded by each sensor over time.
+ 
+All data is stored in-memory using thread-safe ConcurrentHashMap structures via dedicated singleton store classes — RoomStore, SensorStore, and ReadingStore — ensuring data consistency across concurrent requests without the use of any external database.
+ 
+---
+ 
 ## Project Structure
-
+ 
 ```
 smart-campus-api/
-├── Web Pages
-│   └── WEB-INF
-│   │   └── web.xml                             # Servlet 
-├── Source Packages
-│   ├── com.westminster.smartcampus
-│   │   └── JAXRSConfiguration.java             # JAX-RS Application class
-│   │   
-│   ├── com.westminster.smartcampus.dto
-│   │   └── ErrorResponse.java
-│   │   
-│   ├── com.westminster.smartcampus.exception
-│   │   ├── RoomNotEmptyException.java
-│   │   ├── LinkedResourceNotFoundException.java
-│   │   └── SensorUnavailableException.java
-│   │ 
-│   ├── com.westminster.smartcampus.filter
-│   │   └── LoggingFilter.java               # Request 
-│   │ 
-│   ├── com.westminster.smartcampus.mapper
-│   │   ├── RoomNotEmptyMapper.java          # 409 Conflict
-│   │   ├── LinkedResourceNotFoundMapper.java # 422 Unprocessable Entity
-│   │   ├── SensorUnavailableMapper.java     # 403 Forbidden
-│   │   └── GenericThrowableMapper.java      # 500 Internal Server Error
-│   │
-│   ├── com.westminster.smartcampus.model
-│   │   ├── Room.java
-│   │   ├── Sensor.java
-│   │   └── SensorReading.java
-│   │ 
-│   ├── com.westminster.smartcampus.resource
-│   │   ├── DiscoveryResource.java           # GET /api/v1
-│   │   ├── RoomResource.java                # /api/v1/rooms
-│   │   ├── SensorResource.java              # /api/v1/sensors
-│   │   ├── SensorReadingResource.java       # /api/v1/sensors/{id}/readings
-│   │   └── DebugResource.java               # GET /api/v1/debug/boom (500 demo)
-│   │
-│   ├── com.westminster.smartcampus.store
-│   │   ├── RoomStore.java                   # Singleton in-memory room store
-│   │   ├── SensorStore.java                 # Singleton in-memory sensor store
-│   │   └── ReadingStore.java                # Singleton in-memory readings store
-│   │ 
-│   └──com.westminster.smartcampus.web  
-│   │   └── MainServlet.java
-│   │
-├── Test Packages
-├── Dependencies
-├── Java Dependencies
-├── Project Files
-|    └── pom.xml
-
-
+├── pom.xml
+├── src/main/
+│   ├── java/com/westminster/smartcampus/
+│   │   ├── JAXRSConfiguration.java
+│   │   ├── dto/
+│   │   │   └── ErrorResponse.java
+│   │   ├── model/
+│   │   │   ├── Room.java
+│   │   │   ├── Sensor.java
+│   │   │   └── SensorReading.java
+│   │   ├── store/
+│   │   │   ├── RoomStore.java
+│   │   │   ├── SensorStore.java
+│   │   │   └── ReadingStore.java
+│   │   ├── resource/
+│   │   │   ├── DiscoveryResource.java
+│   │   │   ├── RoomResource.java
+│   │   │   ├── SensorResource.java
+│   │   │   ├── SensorReadingResource.java
+│   │   │   └── DebugResource.java
+│   │   ├── exception/
+│   │   │   ├── RoomNotEmptyException.java
+│   │   │   ├── LinkedResourceNotFoundException.java
+│   │   │   └── SensorUnavailableException.java
+│   │   ├── mapper/
+│   │   │   ├── RoomNotEmptyMapper.java
+│   │   │   ├── LinkedResourceNotFoundMapper.java
+│   │   │   ├── SensorUnavailableMapper.java
+│   │   │   └── GenericThrowableMapper.java
+│   │   └── filter/
+│   │       └── LoggingFilter.java
+│   └── webapp/WEB-INF/
+│       └── web.xml
+```
+ 
+---
+ 
 ## API Endpoints
-
-|Method|Endpoint|Description|
-|-|-|-|
-|GET|`/api/v1`|Discovery — API metadata and resource links|
-|GET|`/api/v1/rooms`|List all rooms|
-|POST|`/api/v1/rooms`|Create a new room|
-|GET|`/api/v1/rooms/{roomId}`|Get a specific room|
-|DELETE|`/api/v1/rooms/{roomId}`|Delete a room (blocked if sensors exist)|
-|GET|`/api/v1/sensors`|List all sensors (optional `?type=` filter)|
-|POST|`/api/v1/sensors`|Register a new sensor|
-|GET|`/api/v1/sensors/{sensorId}`|Get a specific sensor|
-|DELETE|`/api/v1/sensors/{sensorId}`|Delete a sensor|
-|GET|`/api/v1/sensors/{sensorId}/readings`|Get reading history for a sensor|
-|POST|`/api/v1/sensors/{sensorId}/readings`|Add a new reading for a sensor|
-|GET|`/api/v1/debug/boom`|Triggers a 500 error to demonstrate global exception mapper|
-
-
+ 
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1` | Discovery — API metadata and resource links |
+| GET | `/api/v1/rooms` | List all rooms |
+| POST | `/api/v1/rooms` | Create a new room |
+| GET | `/api/v1/rooms/{roomId}` | Get a specific room |
+| DELETE | `/api/v1/rooms/{roomId}` | Delete a room (blocked if sensors exist) |
+| GET | `/api/v1/sensors` | List all sensors (optional `?type=` filter) |
+| POST | `/api/v1/sensors` | Register a new sensor |
+| GET | `/api/v1/sensors/{sensorId}` | Get a specific sensor |
+| DELETE | `/api/v1/sensors/{sensorId}` | Delete a sensor |
+| GET | `/api/v1/sensors/{sensorId}/readings` | Get reading history for a sensor |
+| POST | `/api/v1/sensors/{sensorId}/readings` | Add a new reading for a sensor |
+| GET | `/api/v1/debug/boom` | Triggers a 500 error to demonstrate global exception mapper |
+ 
+---
+ 
 ## How to Build and Run
-
+ 
 ### Prerequisites
-
-Ensure the following are installed on your machine:
-
-\* \*\*Java JDK 11 or higher\*\*
-\* \*\*Apache Maven 3.6+\*\*
-\* \*\*Apache Tomcat 9\*\*
-\* \*\*NetBeans IDE\*\* (recommended) or any Maven-compatible IDE
-
-
+ 
+Make sure the following are installed on your machine before proceeding.
+ 
+Java JDK 11 or higher
+ 
+Apache Maven 3.6 or higher
+ 
+Apache Tomcat 9
+ 
+NetBeans IDE or any Maven-compatible IDE
+ 
+---
+ 
 ### Step 1 — Clone the Repository
-
+ 
 ```bash
-git clone https://github.com/loheeshan/smart-campus-api.git
+git clone https://github.com/sanavi-nk/Smart-campus-api.git
 cd smart-campus-api
 ```
-
-
+ 
+---
+ 
 ### Step 2 — Build the Project
-
-Run the following Maven command from the root of the project to compile and package it into a WAR file:
-
+ 
+Run the following Maven command from the root of the project to compile and package it into a WAR file.
+ 
 ```bash
 mvn clean package
 ```
-
-A successful build will generate:
-
+ 
+A successful build will produce the following file inside the target folder.
+ 
 ```
 target/smart-campus-api-1.0-SNAPSHOT.war
 ```
-
-
-### Step 3 — Deploy to Tomcat
-
-**Option A — Using NetBeans (Recommended):**
-
-1. Open the project in NetBeans via **File → Open Project**
-2. Right-click the project → **Run**
-
-NetBeans will automatically deploy to the configured Tomcat server
+ 
 ---
-
+ 
+### Step 3 — Deploy to Tomcat
+ 
+Option A — Using NetBeans (Recommended)
+ 
+Open the project in NetBeans via File then Open Project. Right-click the project and select Run. NetBeans will automatically deploy to the configured Tomcat server.
+ 
+ 
+---
+ 
 ### Step 4 — Verify the Server is Running
-
-Open your browser and navigate to:
-
+ 
+Open your browser and navigate to the following URL.
+ 
 ```
 http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1
 ```
-
-You should see a JSON response with API metadata and resource links.
-
+ 
+You should see a JSON response containing API metadata and hypermedia links to all available resource collections.
+ 
 ---
-
+ 
 ## Sample curl Commands
-
-### 1\. Discovery — Get API Metadata
-
+ 
+### 1. Get API Metadata (Discovery)
+ 
 ```bash
-curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1 
+curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1 \
   -H "Accept: application/json"
 ```
-
-**Expected Response (200 OK):**
-
-```json
-{
-  "api": "Smart Campus Sensor & Room Management API",
-  "version": "1.0.0",
-  "contact": {
-    "email": "admin@smartcampus.ac.uk"
-  },
-  "_links": {
-    "rooms": "/api/v1/rooms",
-    "sensors": "/api/v1/sensors"
-  }
-}
-```
-
+ 
+Expected response is 200 OK with API version, contact information, and resource links.
+ 
 ---
-
-### 2\. Create a New Room
-
+ 
+### 2. Create a New Room
+ 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms 
-  -H "Content-Type: application/json" 
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms \
+  -H "Content-Type: application/json" \
   -d '{"id": "LAB-101", "name": "Computer Lab", "capacity": 30}'
 ```
-
-**Expected Response (201 Created):**
-
-```json
-{
-  "id": "LAB-101",
-  "name": "Computer Lab",
-  "capacity": 30,
-  "sensorIds": []
-}
-```
-
+ 
+Expected response is 201 Created with the full room object and a Location header pointing to the new resource.
+ 
 ---
-
-### 3\. Register a Sensor (with valid roomId)
-
+ 
+### 3. Register a Sensor with a Valid roomId
+ 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
-  -H "Content-Type: application/json" 
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors \
+  -H "Content-Type: application/json" \
   -d '{"id": "CO2-001", "type": "CO2", "status": "ACTIVE", "currentValue": 400.0, "roomId": "LAB-101"}'
 ```
-
-**Expected Response (201 Created):**
-
-```json
-{
-  "id": "CO2-001",
-  "type": "CO2",
-  "status": "ACTIVE",
-  "currentValue": 400.0,
-  "roomId": "LAB-101"
-}
-```
-
+ 
+Expected response is 201 Created with the sensor object. The sensor is also linked to the room automatically.
+ 
 ---
-
-### 4\. Filter Sensors by Type
-
+ 
+### 4. Filter Sensors by Type
+ 
 ```bash
-curl -X GET "http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors?type=CO2" 
+curl -X GET "http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors?type=CO2" \
   -H "Accept: application/json"
 ```
-
-**Expected Response (200 OK):**
-
-```json
-[
-  {
-    "id": "CO2-001",
-    "type": "CO2",
-    "status": "ACTIVE",
-    "currentValue": 400.0,
-    "roomId": "LAB-101"
-  }
-]
-```
-
+ 
+Expected response is 200 OK with a filtered list containing only sensors of type CO2.
+ 
 ---
-
-### 5\. Post a Sensor Reading
-
+ 
+### 5. Post a Sensor Reading
+ 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors/CO2-001/readings 
-  -H "Content-Type: application/json" 
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors/CO2-001/readings \
+  -H "Content-Type: application/json" \
   -d '{"value": 450.5}'
 ```
-
-**Expected Response (201 Created):**
-
-```json
-{
-  "id": "b3f1c2d4-...",
-  "timestamp": 1713960000000,
-  "value": 450.5
-}
-```
-
+ 
+Expected response is 201 Created with the new reading object. The parent sensor's currentValue is also updated to 450.5 as a side effect.
+ 
 ---
-
-### 6\. Delete a Room with Active Sensors (409 Conflict)
-
+ 
+### 6. Attempt to Delete a Room That Still Has Sensors
+ 
 ```bash
-curl -X DELETE http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms/LAB-101 
+curl -X DELETE http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms/LAB-101 \
   -H "Accept: application/json"
 ```
-
-**Expected Response (409 Conflict):**
-
-```json
-{
-  "status": 409,
-  "error": "Conflict",
-  "message": "Room 'LAB-101' cannot be deleted: 1 sensor(s) still assigned.",
-  "timestamp": 1713960000000
-}
-```
-
+ 
+Expected response is 409 Conflict with a JSON error body explaining that the room still has sensors assigned.
+ 
 ---
-
-### 7\. Register a Sensor with Invalid roomId (422 Unprocessable Entity)
-
+ 
+### 7. Register a Sensor with a Non-Existent roomId
+ 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
-  -H "Content-Type: application/json" 
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors \
+  -H "Content-Type: application/json" \
   -d '{"type": "Temperature", "status": "ACTIVE", "currentValue": 22.0, "roomId": "FAKE-999"}'
 ```
-
-**Expected Response (422 Unprocessable Entity):**
-
-```json
-{
-  "status": 422,
-  "error": "Unprocessable Entity",
-  "message": "Referenced Room with id 'FAKE-999' does not exist.",
-  "timestamp": 1713960000000
-}
-```
-
+ 
+Expected response is 422 Unprocessable Entity with a JSON error body explaining that the referenced room does not exist.
+ 
 ---
-
-### 8\. Trigger Global 500 Safety Net
-
+ 
+### 8. Trigger the Global 500 Safety Net
+ 
 ```bash
-curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/debug/boom 
+curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/debug/boom \
   -H "Accept: application/json"
 ```
-
-**Expected Response (500 Internal Server Error):**
-
-```json
-{
-  "status": 500,
-  "error": "Internal Server Error",
-  "message": "An unexpected error occurred. Please contact the administrator.",
-  "timestamp": 1713960000000
-}
-```
-
+ 
+Expected response is 500 Internal Server Error with a clean generic JSON message and no stack trace visible to the client.
+ 
 ---
-
-
-
+ 
 ## Report — Question Answers
 
-
-
-**1.1**
+**1.1 — JAX-RS Resource Lifecycle**
 
 The default lifecycle of a JAX-RS Resource class is, it initiates a new instance for every incoming HTTP Request. Its the opposite of a Singleton. If a client requests GET/api/v1/rooms, JAX-RS creates a brand new RoomResource object to handle the request and destroys it once the response is sent.
 
@@ -347,7 +254,7 @@ To avoid the mentioned issue, it is necessary to make sure that the utilized dat
 
 
 
-**1.2**
+**1.2 — HATEOAS and Hypermedia in RESTful Design**
 
 "HATEOAS" refers to "Hypermedia As The Engine Of Application State." It is often regarded as one of the most advanced and comprehensive forms of REST architecture, first outlined by Roy Fielding in his PhD dissertation defining the term REST. The basic concept here is that a response from an API is not limited to returning data; it must provide links and navigational paths to inform the client about which further actions it can take and how.
 
@@ -367,7 +274,7 @@ However, HATEOAS removes several limitations associated with static documentatio
 
 
 
-**2.1**
+**2.1 — Returning IDs Only vs Full Room Objects**
 
 In determining how to design the **GET /api/v1/rooms**, there are important decisions that need to be made on whether the endpoints will include only room IDs or complete objects that contain all properties like name, capacity, and sensor assignments.
 
@@ -385,7 +292,7 @@ Using the endpoint to include room objects will help the client receive all info
 
 
 
-**2.2**
+**2.2 — Idempotency of the DELETE Operation**
 
 Idempotency of the DELETE Operation
 
@@ -409,7 +316,7 @@ However, there is one situation where the deletion request would be deliberately
 
 
 
-**3.1**
+**3.1 — @Consumes Media Type Mismatch**
 
 **@Consumes(MediaType.APPLICATION\_JSON)** is an annotation provided by JAX-RS that tells the framework that the **POST /api/v1/sensors** endpoint can only receive request payloads of **Content-Type: application/json.**
 
@@ -419,7 +326,7 @@ This is a great internal safeguard. It guarantees that whatever data arrives at 
 
 
 
-**3.2**
+**3.2 — QueryParam vs PathParam for Filtering**
 
 **QueryParam vs PathParam for Filtering**
 
@@ -437,7 +344,7 @@ Finally, query parameters align with established REST conventions and are univer
 
 
 
-**4.1**
+**4.1 — Sub-Resource Locator Pattern**
 
 Sub-Resource Locator Pattern
 
@@ -453,7 +360,7 @@ Thirdly, it makes code more testable because each class could be tested separate
 
 
 
-**5.1**
+**5.1  — Why HTTP 422 is Better Than 404 for Missing References**
 
 If the client makes a **POST** request to register a new sensor that does not belong to an existing room (there is no corresponding entry with the provided **roomId** in the database), then the most adequate status code is **HTTP 422 Unprocessable Entity**, and not HTTP 404 Not Found, which is typically used in such cases.
 
@@ -463,7 +370,7 @@ On the other hand, the 422 HTTP status code is precisely tailored for such cases
 
 
 
-**5.2**
+**5.2 — Cybersecurity Risks of Exposing Stack Traces**
 
 The exposure of raw Java stack traces to the outside API clients is a significant cybersecurity concern, helping attackers penetrate the system in various ways.
 
@@ -475,7 +382,7 @@ In addition, stack traces might disclose the information regarding the business 
 
 
 
-**5.3**
+**5.3 — Why Filters are Better Than Manual Logging**
 
 A filter used to log the messages through a JAX-RS API is far better than adding **Logger.info()** messages to each resource method because there are several reasons for choosing the former over the latter.
 
