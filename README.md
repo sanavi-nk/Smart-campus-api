@@ -2,7 +2,7 @@
 <sub>Sanavi Kulathilake</sub>
 <sub>UoW ID — w2121319   |   IIT ID — 20241171</sub>
 
-# Smart Campus Sensor \& Room Management API
+# Smart Campus Sensor & Room Management API
 
 ## Overview
 
@@ -17,7 +17,7 @@ All data is stored in-memory using thread-safe `ConcurrentHashMap` structures vi
 
 
 
-\---
+---
 
 ## Project Structure
 
@@ -25,7 +25,7 @@ All data is stored in-memory using thread-safe `ConcurrentHashMap` structures vi
 smart-campus-api/
 ├── Web Pages
 │   └── WEB-INF
-│   │   └── web.xml                             # Servlet \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\& Jersey 
+│   │   └── web.xml                             # Servlet 
 ├── Source Packages
 │   ├── com.westminster.smartcampus
 │   │   └── JAXRSConfiguration.java             # JAX-RS Application class
@@ -39,7 +39,7 @@ smart-campus-api/
 │   │   └── SensorUnavailableException.java
 │   │ 
 │   ├── com.westminster.smartcampus.filter
-│   │   └── LoggingFilter.java               # Request \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\& response logging
+│   │   └── LoggingFilter.java               # Request 
 │   │ 
 │   ├── com.westminster.smartcampus.mapper
 │   │   ├── RoomNotEmptyMapper.java          # 409 Conflict
@@ -74,8 +74,6 @@ smart-campus-api/
 |    └── pom.xml
 
 
-\\---
-
 ## API Endpoints
 
 |Method|Endpoint|Description|
@@ -93,7 +91,6 @@ smart-campus-api/
 |POST|`/api/v1/sensors/{sensorId}/readings`|Add a new reading for a sensor|
 |GET|`/api/v1/debug/boom`|Triggers a 500 error to demonstrate global exception mapper|
 
-\\---
 
 ## How to Build and Run
 
@@ -106,16 +103,14 @@ Ensure the following are installed on your machine:
 \* \*\*Apache Tomcat 9\*\*
 \* \*\*NetBeans IDE\*\* (recommended) or any Maven-compatible IDE
 
-\\---
 
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/sanavi-nk/Smart-campus-api.git
+git clone https://github.com/loheeshan/smart-campus-api.git
 cd smart-campus-api
 ```
 
-\---
 
 ### Step 2 — Build the Project
 
@@ -131,7 +126,6 @@ A successful build will generate:
 target/smart-campus-api-1.0-SNAPSHOT.war
 ```
 
-\---
 
 ### Step 3 — Deploy to Tomcat
 
@@ -153,14 +147,14 @@ http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1
 
 You should see a JSON response with API metadata and resource links.
 
-\---
+---
 
 ## Sample curl Commands
 
 ### 1\. Discovery — Get API Metadata
 
 ```bash
-curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1 
   -H "Accept: application/json"
 ```
 
@@ -168,25 +162,25 @@ curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1 \\\\\\\\\
 
 ```json
 {
-  "api": "Smart Campus Sensor \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\& Room Management API",
+  "api": "Smart Campus Sensor & Room Management API",
   "version": "1.0.0",
   "contact": {
     "email": "admin@smartcampus.ac.uk"
   },
-  "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_links": {
+  "_links": {
     "rooms": "/api/v1/rooms",
     "sensors": "/api/v1/sensors"
   }
 }
 ```
 
-\---
+---
 
 ### 2\. Create a New Room
 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  -H "Content-Type: application/json" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms 
+  -H "Content-Type: application/json" 
   -d '{"id": "LAB-101", "name": "Computer Lab", "capacity": 30}'
 ```
 
@@ -197,17 +191,17 @@ curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms \\
   "id": "LAB-101",
   "name": "Computer Lab",
   "capacity": 30,
-  "sensorIds": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\[]
+  "sensorIds": []
 }
 ```
 
-\---
+---
 
 ### 3\. Register a Sensor (with valid roomId)
 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  -H "Content-Type: application/json" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
+  -H "Content-Type: application/json" 
   -d '{"id": "CO2-001", "type": "CO2", "status": "ACTIVE", "currentValue": 400.0, "roomId": "LAB-101"}'
 ```
 
@@ -223,19 +217,19 @@ curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
 }
 ```
 
-\---
+---
 
 ### 4\. Filter Sensors by Type
 
 ```bash
-curl -X GET "http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors?type=CO2" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X GET "http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors?type=CO2" 
   -H "Accept: application/json"
 ```
 
 **Expected Response (200 OK):**
 
 ```json
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\[
+[
   {
     "id": "CO2-001",
     "type": "CO2",
@@ -246,13 +240,13 @@ curl -X GET "http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors?
 ]
 ```
 
-\---
+---
 
 ### 5\. Post a Sensor Reading
 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors/CO2-001/readings \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  -H "Content-Type: application/json" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors/CO2-001/readings 
+  -H "Content-Type: application/json" 
   -d '{"value": 450.5}'
 ```
 
@@ -266,12 +260,12 @@ curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors/
 }
 ```
 
-\---
+---
 
 ### 6\. Delete a Room with Active Sensors (409 Conflict)
 
 ```bash
-curl -X DELETE http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms/LAB-101 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X DELETE http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms/LAB-101 
   -H "Accept: application/json"
 ```
 
@@ -286,13 +280,13 @@ curl -X DELETE http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/rooms/
 }
 ```
 
-\---
+---
 
 ### 7\. Register a Sensor with Invalid roomId (422 Unprocessable Entity)
 
 ```bash
-curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  -H "Content-Type: application/json" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
+  -H "Content-Type: application/json" 
   -d '{"type": "Temperature", "status": "ACTIVE", "currentValue": 22.0, "roomId": "FAKE-999"}'
 ```
 
@@ -307,12 +301,12 @@ curl -X POST http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/sensors 
 }
 ```
 
-\---
+---
 
 ### 8\. Trigger Global 500 Safety Net
 
 ```bash
-curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/debug/boom \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/debug/boom 
   -H "Accept: application/json"
 ```
 
@@ -327,11 +321,11 @@ curl -X GET http://localhost:8080/smart-campus-api-1.0-SNAPSHOT/api/v1/debug/boo
 }
 ```
 
-\---
+---
 
 
 
-\## Report — Question Answers
+## Report — Question Answers
 
 
 
@@ -493,7 +487,3 @@ Third, using filters will ensure that resource methods are left intact, allowing
 
 Fourth, filters operate at the framework level, guaranteeing that the filter will be executed for each message regardless of whether a developer has forgotten to include the logging mechanism into a new resource method.
 
- 
- 
- 
- 
