@@ -111,7 +111,7 @@ Ensure the following are installed on your machine:
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/loheeshan/smart-campus-api.git
+git clone https://github.com/sanavi-nk/Smart-campus-api.git
 cd smart-campus-api
 ```
 
